@@ -13,68 +13,97 @@ use Illuminate\Http\Request;
 |
 */
 
+// ---
+// Department End-Points
+// ---
+Route::group(['prefix' => 'departments'], function () {
+    Route::get('/', 'DepartmentController@getAllDepartments');
+    Route::get('/{department_id}', 'DepartmentController@getDepartmentById');
+
+});
+
+// ---
+// Category End-Points
+// ---
+Route::group(['prefix' => 'categories'], function () {
+    Route::get('/', 'CategoryController@getAllCategories');
+    Route::get('/{category_id}', 'CategoryController@getCategoryById');
+    Route::get('/inProduct/{product_id}', 'CategoryController@getCategoryOfProduct');
+    Route::get('/inDepartment/{department_id}', 'CategoryController@getCategoriesInDepartment');
+});
+
+// ---
+// Attribute End-Points
+// ---
 Route::group(['prefix' => 'attributes'], function () {
     Route::get('/', 'AttributeController@getAllAttributes');
-    Route::get('/{attribute_id}', 'AttributeController@getSingleAttribute');
+    Route::get('/{attribute_id}', 'AttributeController@getAttributeById');
     Route::get('/values/{attribute_id}', 'AttributeController@getAttributeValues');
     Route::get('/inProduct/{product_id}', 'AttributeController@getProductAttributes');
 });
 
-Route::post('/customers', 'CustomerController@updateCreditCard');
+// --
+// Product End-Points
+// --
+Route::group(['prefix' => 'products'], function () {
+    Route::get('/', 'ProductController@getAllProducts');
+    Route::get('/search', 'ProductController@searchProducts');
+    Route::get('/{product_id}', 'ProductController@getProductById');
+    Route::get('/inCategory/{category_id}', 'ProductController@getProductsInCategory');
+    Route::get('/inDepartment/{department_id}', 'ProductController@getProductsInDepartment');
+    Route::get('/{product_id}/reviews', 'ProductController@getProductReviews');
+    Route::post('/{product_id}/reviews', 'ProductController@putProductReview');
+});
+
+// --
+// Customer End-Points
+// --
+Route::post('/customers', 'CustomerController@createProfile');
 Route::post('/customers/login', 'CustomerController@login');
+Route::post('/customers/facebook', 'CustomerController@fbLogin');
 Route::get('/customer', 'CustomerController@getCustomerProfile');
-Route::put('/customer', 'CustomerController@apply');
+Route::put('/customer', 'CustomerController@updateCustomerProfile');
 Route::put('/customer/address', 'CustomerController@updateCustomerAddress');
 Route::put('/customer/creditCard', 'CustomerController@updateCreditCard');
 
-
-
-Route::group(['prefix' => 'products'], function () {
-    Route::get('/', 'ProductController@getAllCategories');
-    Route::get('/{product_id}', 'ProductController@getProduct');
-    Route::get('/search', 'ProductController@searchProduct');
-    Route::get('/inCategory/{category_id}', 'ProductController@getProductsByCategory');
-    Route::get('/inDepartment/{department_id}', 'ProductController@getProductsInDepartment');
-});
-
-
-Route::group(['prefix' => 'departments'], function () {
-    Route::get('/', 'ProductController@getAllDepartments');
-    Route::get('/{department_id}', 'ProductController@getDepartment');
+// --
+// Order End-Points
+// --
+Route::group(['prefix' => 'orders'], function () {
+    Route::post('/', 'ShoppingCartController@createOrder');
+    Route::get('/{order_id}', 'ShoppingCartController@getOrderById');
+    Route::get('/inCustomer', 'ShoppingCartController@getCustomerOrders');
+    Route::get('/shortDetail/{order_id}', 'ShoppingCartController@getOrderSummary');
 
 });
 
-Route::group(['prefix' => 'categories'], function () {
-    Route::get('/', 'ProductController@getAllCategories');
-    Route::get('/{category_id}', 'ProductController@toString');
-    Route::get('/inDepartment/{category_id}', 'ProductController@getDepartmentCategories');
-
-});
-
-
-Route::get('/shipping/regions', 'ShippingController@getShippingRegions');
-Route::get('/shipping/regions/{shipping_region_id}', 'ShippingController@getShippingType');
-
-
-
+// --
+// Shopping Cart End-Points
+// --
 Route::group(['prefix' => 'shoppingcart'], function () {
     Route::get('/generateUniqueId', 'ShoppingCartController@generateUniqueCart');
     Route::post('/add', 'ShoppingCartController@addItemToCart');
-    Route::get('/{cart_id}', 'ShoppingCartController@getCart');
+    Route::get('/{cart_id}', 'ShoppingCartController@getCartById');
     Route::put('/update/{item_id}', 'ShoppingCartController@updateCartItem');
     Route::delete('/empty/{cart_id}', 'ShoppingCartController@emptyCart');
     Route::delete('/removeProduct/{item_id}', 'ShoppingCartController@removeItemFromCart');
 });
 
-Route::group(['prefix' => 'orders'], function () {
-
-    Route::post('/', 'ShoppingCartController@createOrder');
-    Route::get('/inCustomer', 'ShoppingCartController@getCustomerOrders');
-    Route::get('/{order_id}', 'ShoppingCartController@getOrderSummary');
-});
-
-Route::post('/stripe/charge', 'ShoppingCartController@processStripePayment');
-
-
+// --
+// Tax End-Points
+// --
 Route::get('/tax', 'TaxController@getAllTax');
 Route::get('/tax/{tax_id}', 'TaxController@getTaxById');
+
+// --
+// Shipping End-Points
+// --
+Route::get('/shipping/regions', 'ShippingController@getShippingRegions');
+Route::get('/shipping/regions/{shipping_region_id}', 'ShippingController@getShippingInRegion');
+
+
+// --
+// Stripe End-Point
+// --
+Route::post('/stripe/charge', 'ShoppingCartController@processStripePayment');
+
