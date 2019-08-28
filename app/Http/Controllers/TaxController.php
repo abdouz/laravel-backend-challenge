@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Tax;
 
 /**
  * Tax controller contains methods which are needed for all tax request
@@ -13,6 +14,10 @@ use Illuminate\Http\Request;
  */
 class TaxController extends Controller
 {
+    public function __construct(Tax $tax)
+    {
+        $this->tax = $tax;
+    }
     /**
      * This method get all taxes.
      *
@@ -20,7 +25,7 @@ class TaxController extends Controller
      */
     public function getAllTax()
     {
-        return response()->json(['message' => 'this works']);
+        return response()->json($this->tax->all());
     }
 
     /**
@@ -28,8 +33,8 @@ class TaxController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getTaxById()
+    public function getTaxById($tax_id)
     {
-        return response()->json(['message' => 'this works']);
+        return response()->json($this->tax->find($tax_id)->first());
     }
 }

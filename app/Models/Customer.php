@@ -11,4 +11,8 @@ class Customer extends Model
     protected $table = 'customer';
     protected $primaryKey = 'customer_id';
 
+    public function account()
+    {
+        return $this->hasOne('App\User');
+    }
 }

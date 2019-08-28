@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\ProductCategory;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Class Product
@@ -28,25 +29,38 @@ class Product extends Model
     protected $table = 'product';
     protected $primaryKey = 'product_id';
 
-    public static function countedAndPaginableResults(array $criteria = [])
+    // public static function countedAndPaginableResults(array $criteria = [])
+    // {
+    //     return self::all();
+    // }
+
+    // public static function countedAndPaginableResultsWithDepartments(array $criteria = [])
+    // {
+    //     return self::all();
+    // }
+
+    public static function selectLimitDesc($desc_len)
     {
-        return self::all();
+        $columns = ['product_id', 'name', 'price', 'discounted_price',
+                    'image', 'image_2', 'thumbnail', 'display',
+                    DB::raw("LEFT(description, {$desc_len}) as description")];
+        return self::select($columns);
     }
 
-    public static function countedAndPaginableResultsWithDepartments(array $criteria = [])
+    public static function selectLimitDescThumbs($desc_len)
     {
-        return self::all();
+        $columns = ['product_id', 'name', 'price', 'discounted_price',
+                    'thumbnail', DB::raw("LEFT(description, {$desc_len}) as description")];
+        return self::select($columns);
     }
 
     public function categories()
     {
-        return $this->hasManyThrough(
-            Category::class,
-            ProductCategory::class,
-            'product_id',
-            'category_id',
-            'product_id',
-            'category_id'
-        );
+        return $this->belongsToMany('App\Models\Category', 'product_category', 'product_id', 'category_id');
+    }
+
+    public function reviews()
+    {
+        return $this->hasMany('App\Models\Review', 'product_id');
     }
 }

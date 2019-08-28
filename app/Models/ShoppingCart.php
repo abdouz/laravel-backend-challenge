@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\User;
+//use App\Models\Customer;
 
 /**
  * Class ShoppingCart
@@ -16,7 +16,7 @@ use App\User;
  * @property boolean $buy_now
  * @property string $added_on
  * @property int $customer_id
- * @property \App\User $user
+ * @property \App\Models\Customer $customer
  */
 class ShoppingCart extends Model
 {
@@ -26,11 +26,16 @@ class ShoppingCart extends Model
     protected $primaryKey = 'item_id';
     protected $guarded = ['item_id'];
 
-    public static function getOrCreateCartId(User $user): string
+    public function items()
     {
-        $record = ShoppingCart::where('customer_id', $user->getKey())->select('cart_id')->first();
-        if($record) return $record->cart_id;
-
-        return uniqid($user->getKey().'_');
+        
     }
+    
+    // public static function getOrCreateCartId(Customer $customer): string
+    // {
+    //     $record = ShoppingCart::where('customer_id', $customer->getKey())->select('cart_id')->first();
+    //     if($record) return $record->cart_id;
+
+    //     return uniqid($customer->getKey().'_');
+    // }
 }

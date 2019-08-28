@@ -5,6 +5,11 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Department;
 use App\Models\Product;
+use App\Models\Category;
+use App\Models\Review;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Pagination\Paginator;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
  * The Product controller contains all methods that handles product request
@@ -13,27 +18,51 @@ use App\Models\Product;
  *  NB: Check the BACKEND CHALLENGE TEMPLATE DOCUMENTATION in the readme of this repository to see our recommended
  *  endpoints, request body/param, and response object for each of these method.
  */
-class ProductController extends Controller
+class ProductController extends BaseController
 {
-
-    /**
-     * Return a paginated list of products.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function getAllProducts()
+    public function __construct(Product $product, Category $category, Review $review)
     {
-        return response()->json(['status' => true, 'products' => Product::countedAndPaginableResults() ]);
+        $this->product = $product;
+        $this->category = $category;
+    }
+
+    private function formatProductRows(array $data)
+    {
+        return [
+            'paginationMeta' => [
+                'currentPage' => $data['current_page'],
+                'currentPageSize' => (int) $data['to'] - (int) $data['from'] + 1,
+                'totalPages' => $data['last_page'],
+                'totalRecords' => $data['total']
+            ],
+            'rows' => $data['data']
+        ];
     }
 
     /**
-     * Returns a single product with a matched id in the request params.
+     * Return a paginated list of products paginated and description limited as per params passed
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getProduct(Product $product)
+    public function getAllProducts(Request $request)
     {
-        return response()->json(['status' => true, 'products' => $product]);
+        // get parameters passed from get request page, limit and description_length
+        // and set necessary defaults for them if invalid passed
+        $page_num = $this->getParam($request, 'page', 'integer|gt:0', 1);
+        $limit_per_page = $this->getParam($request, 'limit', 'integer|gt:0', 20);
+        $desc_len = $this->getParam($request, 'description_length', 'integer|gt:0', 200);
+
+        // override paginator to start from current page passed 'page'
+        Paginator::currentPageResolver(function () use ($page_num) {
+            return $page_num;
+        });
+
+        $data = $this->product->selectLimitDesc($desc_len)->paginate($limit_per_page)->toArray();
+
+        // format the response array as per API end-point specs.
+        $formatted = $this->formatProductRows($data);
+
+        return response()->json($formatted, 200);
     }
 
     /**
@@ -41,9 +70,38 @@ class ProductController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function searchProduct()
+    public function searchProducts(Request $request)
     {
-        return response()->json(['message' => 'this works']);
+        // get parameters passed from get request page, limit and description_length
+        // and set necessary defaults for them if invalid passed
+        $page_num = $this->getParam($request, 'page', 'integer|gt:0', 1);
+        $limit_per_page = $this->getParam($request, 'limit', 'integer|gt:0', 20);
+        $desc_len = $this->getParam($request, 'description_length', 'integer|gt:0', 200);
+        $query_str = $this->getParam($request, 'query_string', 'string', '');
+        $all_words = $this->getParam($request, 'all_words', 'in:on,off', 'on');
+
+        // override paginator to start from current page passed 'page'
+        Paginator::currentPageResolver(function () use ($page_num) {
+            return $page_num;
+        });
+
+        // select products matching query
+        $data = $this->product->selectLimitDescThumbs($desc_len)->where('name', 'like', "%{$query_str}%")->paginate($limit_per_page)->toArray();
+
+        return response()->json($data);
+    }
+
+    /**
+     * Returns a single product by Id.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getProductById(Request $request, $product_id)
+    {
+        $desc_len = $this->getParam($request, 'description_length', 'integer|gt:0', 200);
+
+        $product = $this->product->selectLimitDesc($desc_len)->find($product_id);
+        return response()->json($product, 200);
     }
 
     /**
@@ -51,9 +109,28 @@ class ProductController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getProductsByCategory()
+    public function getProductsInCategory(Request $request, $category_id)
     {
-        return response()->json(['status' => true, 'products' => Product::countedAndPaginableResultsWithDepartments() ]);
+        // get parameters passed from get request page, limit and description_length
+        // and set necessary defaults for them if invalid passed
+        $page_num = $this->getParam($request, 'page', 'integer|gt:0', 1);
+        $limit_per_page = $this->getParam($request, 'limit', 'integer|gt:0', 20);
+        $desc_len = $this->getParam($request, 'description_length', 'integer|gt:0', 200);
+
+        // override paginator to start from current page passed 'page'
+        Paginator::currentPageResolver(function () use ($page_num) {
+            return $page_num;
+        });
+
+        // select products in a category
+        $data = $this->product->selectLimitDescThumbs($desc_len)->whereHas('categories', function (Builder $query) use ($category_id) {
+            $query->where('category.category_id', '=', $category_id);
+        })->paginate($limit_per_page)->toArray();
+
+        // format the response array as per API end-point specs.
+        $formatted = $this->formatProductRows($data);
+
+        return response()->json($formatted);
     }
 
     /**
@@ -61,49 +138,43 @@ class ProductController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getProductsInDepartment()
+    public function getProductsInDepartment(Request $request, $department_id)
     {
-        return response()->json(['message' => 'this works']);
+        // get parameters passed from get request page, limit and description_length
+        // and set necessary defaults for them if invalid passed
+        $page_num = $this->getParam($request, 'page', 'integer|gt:0', 1);
+        $limit_per_page = $this->getParam($request, 'limit', 'integer|gt:0', 20);
+        $desc_len = $this->getParam($request, 'description_length', 'integer|gt:0', 200);
+
+        // override paginator to start from current page passed 'page'
+        Paginator::currentPageResolver(function () use ($page_num) {
+            return $page_num;
+        });
+
+        // select products in a category
+        $data = $this->product->selectLimitDescThumbs($desc_len)->whereHas('categories', function (Builder $query) use ($department_id) {
+            $query->where('category.department_id', '=', $department_id);
+        })->paginate($limit_per_page)->toArray();
+
+        // format the response array as per API end-point specs.
+        $formatted = $this->formatProductRows($data);
+
+        return response()->json($formatted);
     }
 
-    /**
-     * Returns a list of all product departments.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function getAllDepartments()
-    {
-        return response()->json(['message' => 'this works']);
-    }
+    // public function getProductReviews()
+    // {
+    //     $this->product->reviews()
+    // }
 
-    /**
-     * Returns a single department.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function getDepartment(Department $dep)
-    {
-        return response()->json(['status' => false, 'department' => $dep]);
+    // public function postProductReview(Request $request)
+    // {
+    //     $review = new Review;
+    //     //$review->product_id = $this->getParam();
+    //     $review->customer_id = $cust_id;
+    //     $review->review = $review;
+    //     $review->rating = $rating;
 
-    }
-
-    /**
-     * Returns all categories.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function getAllCategories()
-    {
-        return response()->json(['status' => true, 'departments' => Department::all()]);
-    }
-
-    /**
-     * Returns all categories in a department.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function getDepartmentCategories()
-    {
-        return response()->json(['message' => 'this works']);
-    }
+    //     $review->save();
+    // }
 }

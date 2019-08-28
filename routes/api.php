@@ -13,6 +13,8 @@ use Illuminate\Http\Request;
 |
 */
 
+Route::get('/info', 'BaseController@getInfo');
+
 // ---
 // Department End-Points
 // ---
@@ -52,16 +54,16 @@ Route::group(['prefix' => 'products'], function () {
     Route::get('/inCategory/{category_id}', 'ProductController@getProductsInCategory');
     Route::get('/inDepartment/{department_id}', 'ProductController@getProductsInDepartment');
     Route::get('/{product_id}/reviews', 'ProductController@getProductReviews');
-    Route::post('/{product_id}/reviews', 'ProductController@putProductReview');
+    Route::post('/{product_id}/reviews', 'ProductController@postProductReview');
 });
 
 // --
 // Customer End-Points
 // --
 Route::post('/customers', 'CustomerController@createProfile');
-Route::post('/customers/login', 'CustomerController@login');
+Route::get('/customers/login', 'CustomerController@login');
 Route::post('/customers/facebook', 'CustomerController@fbLogin');
-Route::get('/customer', 'CustomerController@getCustomerProfile');
+Route::get('/customers', 'CustomerController@getCustomerProfile');
 Route::put('/customer', 'CustomerController@updateCustomerProfile');
 Route::put('/customer/address', 'CustomerController@updateCustomerAddress');
 Route::put('/customer/creditCard', 'CustomerController@updateCreditCard');
@@ -83,8 +85,8 @@ Route::group(['prefix' => 'orders'], function () {
 Route::group(['prefix' => 'shoppingcart'], function () {
     Route::get('/generateUniqueId', 'ShoppingCartController@generateUniqueCart');
     Route::post('/add', 'ShoppingCartController@addItemToCart');
-    Route::get('/{cart_id}', 'ShoppingCartController@getCartById');
-    Route::put('/update/{item_id}', 'ShoppingCartController@updateCartItem');
+    Route::get('/{cart_id}', 'ShoppingCartController@getCartDetails');
+    Route::put('/update/{item_id}', 'ShoppingCartController@updateCartItem'); // different from docs
     Route::delete('/empty/{cart_id}', 'ShoppingCartController@emptyCart');
     Route::delete('/removeProduct/{item_id}', 'ShoppingCartController@removeItemFromCart');
 });

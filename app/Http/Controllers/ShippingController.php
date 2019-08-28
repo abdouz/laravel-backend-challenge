@@ -15,6 +15,11 @@ use Illuminate\Http\Request;
  */
 class ShippingController extends Controller
 {
+    public function __construct(Shipping $ship, ShippingRegion $ship_reg)
+    {
+        $this->shipping = $ship;
+        $this->shipping_region = $ship_reg;
+    }
 
     /**
      * Returns a list of all shipping region.
@@ -23,7 +28,7 @@ class ShippingController extends Controller
      */
     public function getShippingRegions()
     {
-        return response()->json(['success' => false, 'shipping' => ShippingRegion::all()]);
+        return response()->json($this->shipping_region->all(), 200);
     }
 
     /**
@@ -31,8 +36,8 @@ class ShippingController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getShippingType($type_id)
+    public function getShippingInRegion($shipping_region_id)
     {
-        return response()->json(['success' => true, 'shipping' => Shipping::where('shipping_region_id', $type_id)->first()]);
+        return response()->json($this->shipping->find($shipping_region_id)->all(), 200);
     }
 }

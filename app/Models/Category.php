@@ -28,4 +28,9 @@ class Category extends Model
     {
         return $department_id == $this->getAttribute('department_id');
     }
+
+    public function products()
+    {
+        return $this->belongsToMany('App\Models\Product', 'product_category', 'category_id', 'product_id');
+    }
 }

@@ -11,4 +11,8 @@ class Attribute extends Model
     protected $table = 'attribute';
     protected $primaryKey = 'attribute_id';
 
+    public function values()
+    {
+        return $this->hasMany('App\Models\AttributeValue', 'attribute_id');
+    }
 }

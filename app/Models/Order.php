@@ -10,4 +10,9 @@ class Order extends Model
 
     protected $table = 'orders';
     protected $primaryKey = 'order_id';
+
+    public function items()
+    {
+        return $this->hasMany('App\Models\OrderDetail', 'order_id');
+    }
 }
